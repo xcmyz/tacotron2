@@ -136,7 +136,7 @@ class Postnet(nn.Module):
                          padding=int((hparams.postnet_kernel_size - 1) / 2),
                          dilation=1, w_init_gain='linear'),
                 nn.BatchNorm1d(hparams.n_mel_channels))
-            )
+        )
 
     def forward(self, x):
         for i in range(len(self.convolutions) - 1):
@@ -151,6 +151,7 @@ class Encoder(nn.Module):
         - Three 1-d convolution banks
         - Bidirectional LSTM
     """
+
     def __init__(self, hparams):
         super(Encoder, self).__init__()
 
@@ -527,3 +528,13 @@ class Tacotron2(nn.Module):
             [mel_outputs, mel_outputs_postnet, gate_outputs, alignments])
 
         return outputs
+
+    def gta(self, inputs, mels):
+        embedded_inputs = self.embedding(inputs).transpose(1, 2)
+        encoder_outputs = self.encoder.inference(embedded_inputs)
+        mel_outputs, gate_outputs, alignments = self.decoder(encoder_outputs, mels, memory_lengths=None)
+
+        mel_outputs_postnet = self.postnet(mel_outputs)
+        mel_outputs_postnet = mel_outputs + mel_outputs_postnet
+
+        return mel_outputs_postnet
